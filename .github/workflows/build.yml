@@ -1,0 +1,45 @@
+name: build-runtime
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetching Build Tools
+        working-directory: /home/runner/work/
+        run: git clone https://github.com/bottlesdevs/build-tools.git
+      
+      - name: Make build scripts executable
+        working-directory: /home/runner/work/build-tools/runtime
+        run: chmod +x *
+      
+      - name: Launch environment.sh
+        working-directory: /home/runner/work/build-tools/runtime
+        run: ./environment.sh
+      
+      - name: Launch build.py
+        working-directory: /home/runner/work/build-tools/runtime
+        run: python3 build.py
+
+      - name: Get release version
+        working-directory: /home/runner/work/runtime/runtime
+        id: vars
+        run: |
+          version=$(cat VERSION)
+          echo "::set-output name=release_version::${version}"
+        
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          draft: false
+          prerelease: false
+          automatic_release_tag: "${{ steps.vars.outputs.release_version }}"
+          title: "${{ steps.vars.outputs.release_version }}"
+          files: "/home/runner/work/build-tools/runtime/runtime.tar.gz"
+          
