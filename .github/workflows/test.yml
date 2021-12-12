@@ -13,5 +13,5 @@ jobs:
 
       - name: tests
         working-directory: /home/runner/work/
-        run: cat /etc/apt/sources.list
+        run: lsb_release -a
           
