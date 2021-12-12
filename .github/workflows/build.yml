@@ -15,7 +15,6 @@ jobs:
         working-directory: /home/runner/work/
         run: |
           apt update -y
-          apt upgrade -y
 
       - name: Fetching Build Tools
         working-directory: /home/runner/work/
