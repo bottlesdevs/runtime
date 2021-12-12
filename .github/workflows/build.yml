@@ -11,11 +11,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Update
-        working-directory: /home/runner/work/
-        run: |
-          apt update -y
-
       - name: Fetching Build Tools
         working-directory: /home/runner/work/
         run: git clone https://github.com/bottlesdevs/build-tools.git
