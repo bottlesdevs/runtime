@@ -13,5 +13,7 @@ jobs:
 
       - name: tests
         working-directory: /home/runner/work/
-        run: lsb_release -a
+        run: |
+          lsb_release -a
+          sudo aptitude install libsoxr0 libsoxr0:i386
           
