@@ -39,5 +39,5 @@ jobs:
           prerelease: false
           automatic_release_tag: "${{ steps.vars.outputs.release_version }}"
           title: "${{ steps.vars.outputs.release_version }}"
-          files: "/home/runner/work/runtime.tar.gz"
+          files: "/home/runner/work/build-tools/runtime/runtimezilla/runtime.tar.gz"
           
