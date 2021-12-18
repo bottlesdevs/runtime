@@ -13,17 +13,13 @@ jobs:
         working-directory: /home/runner/work/
         run: git clone https://github.com/bottlesdevs/build-tools.git
       
-      - name: Make build scripts executable
-        working-directory: /home/runner/work/build-tools/runtime
-        run: chmod +x *
-      
       - name: Launch environment.sh
         working-directory: /home/runner/work/build-tools/runtime
         run: ./environment.sh
       
-      - name: Launch build.py
+      - name: Launch build.sh
         working-directory: /home/runner/work/build-tools/runtime
-        run: python3 build.py
+        run: ./build.sh
 
       - name: Get release version
         working-directory: /home/runner/work/runtime/runtime
