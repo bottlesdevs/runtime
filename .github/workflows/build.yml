@@ -31,7 +31,12 @@ jobs:
         run: |
           version=$(cat VERSION)
           echo "::set-output name=release_version::${version}"
-        
+
+      - name: Rename runtime archive
+        working-directory: /home/runner
+        run: |
+          mv "runtime.tar.gz" "runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
