@@ -31,7 +31,12 @@ jobs:
         run: |
           version=$(cat VERSION)
           echo "::set-output name=release_version::${version}"
-        
+
+      - name: Rename runtime archive
+        working-directory: /home/runner
+        run: |
+          mv "runtime.tar.gz" "runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
@@ -39,7 +44,7 @@ jobs:
           prerelease: false
           automatic_release_tag: "${{ steps.vars.outputs.release_version }}"
           title: "${{ steps.vars.outputs.release_version }}"
-          files: "/home/runner/runtime.tar.gz"
+          files: "/home/runner/runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
       
       - name: Upload log.txt
         uses: actions/upload-artifact@v2
