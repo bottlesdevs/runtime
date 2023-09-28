@@ -16,7 +16,7 @@ jobs:
       - name: Fetching Build Tools
         uses: actions/checkout@v4
         with:
-          repository: koplo199/build-tools
+          repository: bottlesdevs/build-tools
           path: build-tools
 
       - name: Get release version
