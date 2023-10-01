@@ -6,11 +6,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-     image: debian:bookworm
+#    container:
+#     image: debian:bookworm
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           path: runtime_source
 
       - name: Fetching Build Tools
@@ -24,10 +25,17 @@ jobs:
         id: vars
         run: |
           version=$(cat VERSION)
+          is_new_version=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} VERSION)
+          if ! [ -z "$is_new_version" ]; then
+            is_new_version=true
+          else
+            is_new_version=false
+          fi
           echo "release_version=${version}" >> $GITHUB_OUTPUT
+          echo "new_version=${is_new_version}" >> $GITHUB_OUTPUT
 
-      - name: Install container dependencies
-        run: apt-get update -qq && apt -y install sudo
+#      - name: Install container dependencies
+#        run: apt-get update -qq && apt -y install sudo
 
       - name: Make build scripts executable
         working-directory: build-tools/runtime
@@ -46,6 +54,7 @@ jobs:
           mv "runtime.tar.gz" "runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
 
       - uses: "marvinpinto/action-automatic-releases@latest"
+        if: steps.vars.outputs.new_version == 'true'
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           draft: false
@@ -59,4 +68,3 @@ jobs:
         with:
           name: log.txt
           path: build-tools/runtime/runtimezilla/log.txt
-          
