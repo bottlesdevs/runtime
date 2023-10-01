@@ -3,12 +3,24 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
+env:
+#  We cannot use env for containers...
+#  https://github.com/actions/runner/issues/2394
+#  CONTAINER: debian:bookworm
+  CONTAINER_NAME: Debian
+  CONTAINER_VERSION: 12
+
 jobs:
   build:
     runs-on: ubuntu-latest
-#    container:
-#     image: debian:bookworm
+    container:
+     image: debian:bookworm
+#     image: ${{ env.CONTAINER }}
     steps:
+      - name: Install container dependencies
+        run: apt-get update -qq && apt -y install git sudo
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -34,16 +46,13 @@ jobs:
           echo "release_version=${version}" >> $GITHUB_OUTPUT
           echo "new_version=${is_new_version}" >> $GITHUB_OUTPUT
 
-#      - name: Install container dependencies
-#        run: apt-get update -qq && apt -y install sudo
-
       - name: Make build scripts executable
         working-directory: build-tools/runtime
         run: chmod +x *
       
       - name: Launch environment.sh
         working-directory: build-tools/runtime
-        run: ./environment.sh "${{ steps.vars.outputs.release_version }}" "Debian" "12"
+        run: ./environment.sh "${{ steps.vars.outputs.release_version }}" ${{ env.CONTAINER_NAME }} ${{ env.CONTAINER_VERSION }}
       
       - name: Launch build.sh
         working-directory: build-tools/runtime
