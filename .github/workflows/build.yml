@@ -3,52 +3,77 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
+env:
+#  We cannot use env for containers...
+#  https://github.com/actions/runner/issues/2394
+#  CONTAINER: debian:bookworm
+  CONTAINER_NAME: Debian
+  CONTAINER_VERSION: 12
+
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
+    container:
+     image: debian:bookworm
+#     image: ${{ env.CONTAINER }}
     steps:
-      - uses: actions/checkout@v2
+      - name: Install container dependencies
+        run: apt-get update -qq && apt -y install git sudo
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: runtime_source
 
       - name: Fetching Build Tools
-        working-directory: /home/runner/work/
-        run: git clone https://github.com/bottlesdevs/build-tools.git
-
-      - name: Make build scripts executable
-        working-directory: /home/runner/work/build-tools/runtime
-        run: chmod +x *
-      
-      - name: Launch environment.sh
-        working-directory: /home/runner/work/build-tools/runtime
-        run: ./environment.sh
-      
-      - name: Launch build.sh
-        working-directory: /home/runner/work/build-tools/runtime
-        run: ./build.sh
+        uses: actions/checkout@v4
+        with:
+          repository: bottlesdevs/build-tools
+          path: build-tools
 
       - name: Get release version
-        working-directory: /home/runner/work/runtime/runtime
+        working-directory: runtime_source
         id: vars
         run: |
           version=$(cat VERSION)
-          echo "::set-output name=release_version::${version}"
+          is_new_version=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} VERSION)
+          if ! [ -z "$is_new_version" ]; then
+            is_new_version=true
+          else
+            is_new_version=false
+          fi
+          echo "release_version=${version}" >> $GITHUB_OUTPUT
+          echo "new_version=${is_new_version}" >> $GITHUB_OUTPUT
+
+      - name: Make build scripts executable
+        working-directory: build-tools/runtime
+        run: chmod +x *
+      
+      - name: Launch environment.sh
+        working-directory: build-tools/runtime
+        run: ./environment.sh "${{ steps.vars.outputs.release_version }}" ${{ env.CONTAINER_NAME }} ${{ env.CONTAINER_VERSION }}
+      
+      - name: Launch build.sh
+        working-directory: build-tools/runtime
+        run: ./build.sh
 
       - name: Rename runtime archive
-        working-directory: /home/runner
         run: |
           mv "runtime.tar.gz" "runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
 
       - uses: "marvinpinto/action-automatic-releases@latest"
+        if: steps.vars.outputs.new_version == 'true'
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           draft: false
           prerelease: false
           automatic_release_tag: "${{ steps.vars.outputs.release_version }}"
           title: "${{ steps.vars.outputs.release_version }}"
-          files: "/home/runner/runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
+          files: "runtime-${{ steps.vars.outputs.release_version }}.tar.gz"
       
       - name: Upload log.txt
         uses: actions/upload-artifact@v2
         with:
           name: log.txt
-          path: /home/runner/work/build-tools/runtime/runtimezilla/log.txt
-          
+          path: build-tools/runtime/runtimezilla/log.txt
